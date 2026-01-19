@@ -1,0 +1,43 @@
+About the job
+About Joveo:
+As the global leader in AI-powered, high-performance recruitment marketing, Joveo is transforming talent attraction and recruitment media buying for the world’s largest employers, staffing firms, RPOs, and media agencies. The Joveo platform enables businesses to attract, source, engage, and hire the best candidates on time and within budget.
+Backed by marquee investors like Nexus Ventures Partners, Joveo has been featured in Inc. Magazine’s List of America’s Fastest-Growing Private Companies for three years in a row.
+Powering millions of jobs every day, Joveo’s data-driven recruitment marketing platform uses advanced data science and machine learning to dynamically manage and optimize talent sourcing and applications across all online channels while providing real-time insights at every step of the job seeker journey, from click to hire.
+For more information about Joveo’s award-winning platform, visit www.joveo.com.
+
+
+Role Overview:
+
+As a Software Development (BE) Intern at Joveo, you will have the opportunity to work alongside experienced engineers, contributing to the development, and optimization of innovative software solutions. This internship is ideal for developers to apply their programming skills in a dynamic and collaborative environment.
+
+
+Key Responsibilities:
+
+Development and Coding:
+
+Assist in the development and maintenance of software applications, working with programming languages such as Java and other relevant technologies.
+Write clean, efficient, and maintainable code under the guidance of senior engineers.
+Collaborate with team members to implement software engineering best practices, including unit testing and code reviews.
+Learning and Collaboration:
+
+Work closely with cross-functional teams to understand project requirements and contribute to product development.
+Learn to balance the need for delivering high-quality solutions with the urgency of meeting project deadlines.
+Participate in team discussions, code reviews, and problem-solving sessions to gain hands-on experience in real-world projects.
+Innovation and Problem Solving:
+
+Assist in troubleshooting and debugging software issues.
+Actively engage in the continuous learning process, staying up-to-date with new technologies and industry trends.
+Experiment with new ideas and solutions that can improve the product's performance or user experience.
+Qualifications:
+
+Bachelor’s degree in Computer Science, Computer Engineering, or a related technical field.
+Familiarity with at least one programming language such as Java or any other functional language.
+Basic understanding of software development concepts, such as coding, testing, and documentation.
+Strong problem-solving skills and a willingness to learn and adapt in a fast-paced environment.
+Ability to work collaboratively in a team-oriented setting.
+What We Offer:
+
+Hands-on experience working on real projects alongside experienced professionals.
+Mentorship and guidance to help you grow your technical skills and knowledge.
+A dynamic and supportive work environment with opportunities to learn and explore new technologies.
+A potential path to full-time employment upon successful completion of the internship.

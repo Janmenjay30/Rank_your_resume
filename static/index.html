@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Checker</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div>
+          <h1>Resume Checker</h1>
+          <p class="subtitle">Upload resumes and paste a job description to rank matches.</p>
+        </div>
+        <div class="pill">API: <code>/api/rank</code></div>
+      </header>
+
+      <section class="card">
+        <form id="rankForm" class="form">
+          <label class="label">
+            Job description
+            <textarea
+              id="jd"
+              name="jd"
+              class="textarea"
+              rows="10"
+              placeholder="Paste the job description here..."
+              required
+            ></textarea>
+          </label>
+
+          <div class="label">
+            Resumes (PDF) — up to 4
+            <div class="grid">
+              <label class="slot">
+                <span class="slot-title">Resume 1</span>
+                <input id="resume1" name="resume1" class="input" type="file" accept="application/pdf" required />
+              </label>
+              <label class="slot">
+                <span class="slot-title">Resume 2</span>
+                <input id="resume2" name="resume2" class="input" type="file" accept="application/pdf" />
+              </label>
+              <label class="slot">
+                <span class="slot-title">Resume 3</span>
+                <input id="resume3" name="resume3" class="input" type="file" accept="application/pdf" />
+              </label>
+              <label class="slot">
+                <span class="slot-title">Resume 4</span>
+                <input id="resume4" name="resume4" class="input" type="file" accept="application/pdf" />
+              </label>
+            </div>
+            <div class="hint">You can rank 1–4 resumes in one request.</div>
+          </div>
+
+          <div class="row">
+            <button id="submitBtn" class="btn" type="submit">Rank resumes</button>
+            <button id="clearBtn" class="btn btn-secondary" type="button">Clear</button>
+          </div>
+
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Results</h2>
+          <div class="small">Sorted by score (higher is better)</div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" aria-label="Ranked results">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Resume</th>
+                <th class="num">Score</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr>
+                <td colspan="3" class="muted">No results yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span class="small">Backend: FastAPI + sentence-transformers</span>
+      </footer>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
