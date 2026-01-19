@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 
 fastapi
 uvicorn[standard]
@@ -8,3 +9,5 @@ pdfplumber
 spacy
 sentence-transformers
 
+# Force CPU-only torch inside Linux containers (prevents huge CUDA/NVIDIA deps)
+torch==2.5.1+cpu ; platform_system=="Linux" and platform_machine=="x86_64"
