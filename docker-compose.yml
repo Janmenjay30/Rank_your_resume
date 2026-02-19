@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  # ─── MongoDB ───────────────────────────────
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Python ML Service ─────────────────────
+  ml_service:
+    build:
+      context: ./ml_service
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ml_vector_store:/app/vector_store
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ─── Node.js Backend ───────────────────────
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads:/app/uploads
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://mongo:27017/resumechecker
+      ML_SERVICE_URL: http://ml_service:8001
+      JWT_SECRET: ${JWT_SECRET:-supersecretchangemeinprod}
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ml_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── React Frontend ────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  ml_vector_store:
+  uploads:
