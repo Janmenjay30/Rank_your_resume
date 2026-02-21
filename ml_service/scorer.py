@@ -175,9 +175,8 @@ def score_resume(
     Returns:
         DetailedScore with total and component scores.
     """
-    from embeddings import embed as _embed
     if jd_vector is None:
-        jd_vector = _embed(jd_text)
+        jd_vector = embed(jd_text)
 
     w = {**DEFAULT_WEIGHTS, **(weights or {})}
 

@@ -60,10 +60,12 @@ router.post("/upload", protect, tmpUpload.array("resumes", 20), async (req, res,
     const data = await mlRes.json();
 
     // Persist result to MongoDB
+    // Strip 'resume' field from ML response (it's a filename string, not an ObjectId)
+    const cleanRankings = (data.rankings || []).map(({ resume: _r, ...rest }) => rest);
     const saved = await RankResult.create({
       owner: req.user.id,
       jobDescription: jd,
-      rankings: data.rankings,
+      rankings: cleanRankings,
       weights: weights ? JSON.parse(weights) : undefined,
     });
 
@@ -96,10 +98,11 @@ router.post("/stored", protect, async (req, res, next) => {
 
     const data = await mlRes.json();
 
+    const cleanRankings = (data.rankings || []).map(({ resume: _r, ...rest }) => rest);
     const saved = await RankResult.create({
       owner: req.user.id,
       jobDescription: jd,
-      rankings: data.rankings,
+      rankings: cleanRankings,
     });
 
     res.json({ resultId: saved._id, ...data });

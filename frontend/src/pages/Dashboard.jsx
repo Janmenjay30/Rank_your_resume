@@ -5,7 +5,8 @@ import ResultsTable from "../components/ResultsTable.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const fileRef = useRef(null);
+  const singleRef = useRef(null);   // "Add Resume" – one file
+  const multiRef  = useRef(null);   // "Add All"    – multiple files
 
   const [jd, setJd] = useState("");
   const [files, setFiles] = useState([]);
@@ -29,18 +30,33 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
-  const handleFiles = (e) => {
-    const selected = Array.from(e.target.files || []);
-    setFiles(selected);
+  // Merge new files into existing list (no duplicates by name)
+  const mergeFiles = (incoming) => {
+    const pdfs = incoming.filter((f) => f.type === "application/pdf");
+    setFiles((prev) => {
+      const existingNames = new Set(prev.map((f) => f.name));
+      const fresh = pdfs.filter((f) => !existingNames.has(f.name));
+      return [...prev, ...fresh].slice(0, 20);
+    });
+  };
+
+  const handleSinglePick = (e) => {
+    mergeFiles(Array.from(e.target.files || []));
+    e.target.value = "";           // reset so same file can be re-added if removed
+  };
+
+  const handleMultiPick = (e) => {
+    mergeFiles(Array.from(e.target.files || []));
+    e.target.value = "";
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const dropped = Array.from(e.dataTransfer.files).filter(
-      (f) => f.type === "application/pdf"
-    );
-    setFiles(dropped);
+    mergeFiles(Array.from(e.dataTransfer.files));
   };
+
+  const removeFile = (name) =>
+    setFiles((prev) => prev.filter((f) => f.name !== name));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,41 +115,89 @@ export default function Dashboard() {
             />
           </label>
 
-          {/* File drop zone */}
+          {/* Hidden file inputs */}
+          <input
+            ref={singleRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handleSinglePick}
+            className="hidden"
+          />
+          <input
+            ref={multiRef}
+            type="file"
+            accept="application/pdf"
+            multiple
+            onChange={handleMultiPick}
+            className="hidden"
+          />
+
+          {/* Drop zone */}
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-white/20 hover:border-purple-400 rounded-xl p-8 text-center cursor-pointer transition"
+            className="border-2 border-dashed border-white/20 hover:border-purple-400 rounded-xl p-6 text-center transition"
           >
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf"
-              multiple
-              onChange={handleFiles}
-              className="hidden"
-            />
-            {files.length === 0 ? (
-              <>
-                <p className="text-white/60 text-sm">
-                  Drag &amp; drop PDF resumes here, or click to select
-                </p>
-                <p className="text-white/30 text-xs mt-1">Up to 20 files</p>
-              </>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-green-400 text-sm font-medium">
-                  {files.length} file{files.length > 1 ? "s" : ""} selected
-                </p>
-                <ul className="text-white/50 text-xs space-y-0.5">
-                  {files.map((f, i) => (
-                    <li key={i}>{f.name}</li>
-                  ))}
-                </ul>
-              </div>
+            <p className="text-white/50 text-sm">Drag &amp; drop PDF resumes here</p>
+            <p className="text-white/25 text-xs mt-0.5">or use the buttons below</p>
+          </div>
+
+          {/* Add buttons */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => singleRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-sm transition"
+            >
+              <span className="text-lg leading-none">+</span> Add Resume
+            </button>
+            <button
+              type="button"
+              onClick={() => multiRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-sm transition"
+            >
+              <span className="text-lg leading-none">⊕</span> Add All at Once
+            </button>
+            {files.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setFiles([])}
+                className="ml-auto px-4 py-2 text-red-400/70 hover:text-red-400 text-sm transition"
+              >
+                Clear all
+              </button>
             )}
           </div>
+
+          {/* File list */}
+          {files.length > 0 && (
+            <ul className="space-y-1.5">
+              {files.map((f, i) => (
+                <li
+                  key={f.name}
+                  className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-white/30 text-xs w-5 text-right flex-shrink-0">{i + 1}.</span>
+                    <span className="text-sm truncate">{f.name}</span>
+                    <span className="text-white/30 text-xs flex-shrink-0">
+                      {(f.size / 1024).toFixed(0)} KB
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(f.name)}
+                    className="ml-3 text-white/30 hover:text-red-400 text-lg leading-none flex-shrink-0 transition"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+              <p className="text-xs text-white/30 pt-1">
+                {files.length} / 20 resume{files.length !== 1 ? "s" : ""} selected
+              </p>
+            </ul>
+          )}
 
           {/* Weights (collapsible) */}
           <div>

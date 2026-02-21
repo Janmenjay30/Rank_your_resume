@@ -1,6 +1,6 @@
 import { Router } from "express";
 import User from "../models/User.js";
-import { signToken } from "../middleware/auth.js";
+import { signToken, protect } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -50,15 +50,11 @@ router.post("/login", async (req, res, next) => {
 });
 
 // GET /api/auth/me
-router.get("/me", async (req, res, next) => {
+router.get("/me", protect, async (req, res, next) => {
   try {
-    const auth = req.headers.authorization;
-    if (!auth) return res.status(401).json({ error: "No token." });
-    const { protect } = await import("../middleware/auth.js");
-    protect(req, res, async () => {
-      const user = await User.findById(req.user.id).select("-password");
-      res.json(user);
-    });
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found." });
+    res.json(user);
   } catch (err) {
     next(err);
   }

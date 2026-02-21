@@ -6,7 +6,6 @@ python-multipart
 
 # PDF parsing
 pdfplumber>=0.11.0
-PyMuPDF>=1.24.0
 
 # NLP
 spacy>=3.7.0
