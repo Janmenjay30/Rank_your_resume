@@ -1,6 +1,7 @@
 """
 Embedding generation and FAISS vector store.
-Generates 384-d sentence vectors (all-MiniLM-L6-v2) and stores them in FAISS.
+Generates 384-d sentence vectors (all-MiniLM-L6-v2) and stores them in a
+FAISS IndexHNSWFlat index (approximate nearest-neighbour, inner-product metric).
 """
 
 from __future__ import annotations
@@ -46,6 +47,61 @@ def embed_batch(texts: list[str]) -> np.ndarray:
     return vecs.astype(np.float32)
 
 
+# ─────────────────────────────────────────────
+# Chunked embedding for long documents
+# ─────────────────────────────────────────────
+
+# all-MiniLM-L6-v2 max = 256 tokens.  Using ~200 words per chunk keeps us
+# safely under the limit; 50-word overlap preserves cross-boundary context.
+_CHUNK_WORDS   = 200
+_OVERLAP_WORDS = 50
+
+
+def chunk_text(text: str, chunk_words: int = _CHUNK_WORDS, overlap_words: int = _OVERLAP_WORDS) -> list[str]:
+    """
+    Split *text* into overlapping word-based chunks.
+    Returns at least one chunk (the original text if it is short enough).
+    """
+    words = text.split()
+    if len(words) <= chunk_words:
+        return [text]
+
+    chunks: list[str] = []
+    start = 0
+    while start < len(words):
+        end = min(start + chunk_words, len(words))
+        chunks.append(" ".join(words[start:end]))
+        if end == len(words):
+            break
+        start += chunk_words - overlap_words  # slide forward with overlap
+    return chunks
+
+
+def embed_long_text(text: str) -> np.ndarray:
+    """
+    Embed a potentially long document by chunking it into ≤256-token pieces,
+    embedding each chunk, and returning the mean-pooled normalised vector.
+
+    Use this instead of ``embed()`` whenever the input may exceed 256 tokens
+    (e.g. full resume text).
+    """
+    chunks = chunk_text(text)
+    if len(chunks) == 1:
+        return embed(chunks[0])
+
+    # Embed all chunks in a single batched call for efficiency
+    model = get_model()
+    vecs = model.encode(chunks, convert_to_numpy=True, normalize_embeddings=False)
+    vecs = vecs.astype(np.float32)
+
+    # Mean-pool then re-normalise so the result stays on the unit sphere
+    mean_vec = vecs.mean(axis=0)
+    norm = np.linalg.norm(mean_vec)
+    if norm > 0:
+        mean_vec = mean_vec / norm
+    return mean_vec.astype(np.float32)
+
+
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     """Cosine similarity between two normalised vectors (dot product)."""
     return float(np.dot(a, b))
@@ -60,6 +116,7 @@ INDEX_PATH = STORE_DIR / "faiss.index"
 META_PATH = STORE_DIR / "metadata.pkl"
 
 DIMENSION = 384  # all-MiniLM-L6-v2 output size
+HNSW_M    = 32   # HNSW neighbours per node — higher = better recall, more RAM/build time
 
 
 class VectorStore:
@@ -72,16 +129,17 @@ class VectorStore:
 
     def __init__(self) -> None:
         STORE_DIR.mkdir(parents=True, exist_ok=True)
-        self._index: faiss.IndexFlatIP = self._load_or_create_index()
+        self._index: faiss.IndexHNSWFlat = self._load_or_create_index()
         self._metadata: list[dict] = self._load_metadata()  # parallel list to index rows
 
     # ── persistence ──────────────────────────
 
-    def _load_or_create_index(self) -> faiss.IndexFlatIP:
+    def _load_or_create_index(self) -> faiss.IndexHNSWFlat:
         if INDEX_PATH.exists():
             return faiss.read_index(str(INDEX_PATH))
-        # Inner-product index works as cosine similarity when vectors are normalised
-        return faiss.IndexFlatIP(DIMENSION)
+        # HNSW with inner-product metric = cosine similarity on normalised vectors.
+        # M=32 gives a good recall/speed trade-off for hundreds-to-thousands of resumes.
+        return faiss.IndexHNSWFlat(DIMENSION, HNSW_M, faiss.METRIC_INNER_PRODUCT)
 
     def _load_metadata(self) -> list[dict]:
         if META_PATH.exists():
@@ -116,16 +174,16 @@ class VectorStore:
         kept_meta = [m for _, m in keep]
 
         if not kept_indices:
-            self._index = faiss.IndexFlatIP(DIMENSION)
+            self._index = faiss.IndexHNSWFlat(DIMENSION, HNSW_M, faiss.METRIC_INNER_PRODUCT)
             self._metadata = []
             return
 
-        # Reconstruct vectors for kept entries
+        # Reconstruct vectors for kept entries then rebuild the HNSW index.
         all_vecs = np.zeros((self._index.ntotal, DIMENSION), dtype=np.float32)
         self._index.reconstruct_n(0, self._index.ntotal, all_vecs)
         kept_vecs = all_vecs[kept_indices]
 
-        new_index = faiss.IndexFlatIP(DIMENSION)
+        new_index = faiss.IndexHNSWFlat(DIMENSION, HNSW_M, faiss.METRIC_INNER_PRODUCT)
         new_index.add(kept_vecs)
         self._index = new_index
         self._metadata = kept_meta

@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from embeddings import cosine_similarity, embed
+from embeddings import cosine_similarity, embed_long_text
 from parser import ParsedResume
 from skill_db import extract_skills_from_text
 
@@ -70,7 +70,8 @@ class DetailedScore:
 
 def _semantic_score(resume: ParsedResume, jd_vector) -> float:
     """Cosine similarity between resume text embedding and JD embedding."""
-    res_vec = embed(resume.cleaned_text or resume.raw_text[:3000])
+    text = resume.cleaned_text or resume.raw_text
+    res_vec = embed_long_text(text)  # chunked — handles resumes longer than 256 tokens
     return max(0.0, cosine_similarity(res_vec, jd_vector))
 
 
@@ -175,8 +176,14 @@ def score_resume(
     Returns:
         DetailedScore with total and component scores.
     """
+    if not jd_text or not jd_text.strip():
+        raise ValueError("jd_text cannot be empty")
+    
     if jd_vector is None:
-        jd_vector = embed(jd_text)
+        jd_vector = embed_long_text(jd_text)
+    
+    if jd_vector is None:
+        raise ValueError("Failed to generate JD embedding")
 
     w = {**DEFAULT_WEIGHTS, **(weights or {})}
 
