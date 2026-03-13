@@ -9,7 +9,7 @@ Node.js Backend (API + JWT Auth + MongoDB)
         ↓
 Python ML Service (NLP Engine + FastAPI)
         ↓  ↓
-Sentence Transformers   FAISS Vector DB
+Gemini Embeddings API   FAISS Vector DB
 ```
 
 ---
@@ -23,7 +23,7 @@ resumeChecker/
 ├── ml_service/        # Python FastAPI + NLP engine
 │   ├── app.py         # API endpoints
 │   ├── parser.py      # Resume parsing pipeline
-│   ├── embeddings.py  # Sentence-transformers + FAISS
+│   ├── embeddings.py  # Gemini embeddings + FAISS
 │   ├── scorer.py      # Weighted scoring algorithm
 │   ├── explainer.py   # Explainability engine
 │   └── skill_db.py    # Skill taxonomy database
@@ -97,6 +97,10 @@ Every ranked resume returns:
 ### Vector Database (FAISS)
 Pre-parse and index large resume batches via `POST /parse`.
 Then rank on demand with `POST /rank/stored` (no re-embedding).
+
+Set `GEMINI_API_KEY` before starting the ML service. If you migrate from the
+previous local 384-d embedding model to Gemini, rebuild `ml_service/vector_store`
+so the FAISS index matches the configured embedding size.
 
 ---
 

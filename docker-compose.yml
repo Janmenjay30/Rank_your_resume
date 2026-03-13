@@ -24,6 +24,9 @@ services:
       - ml_vector_store:/app/vector_store
     environment:
       - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_EMBED_MODEL=${GEMINI_EMBED_MODEL:-models/gemini-embedding-001}
+      - GEMINI_EMBED_DIMENSION=${GEMINI_EMBED_DIMENSION:-768}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 20s

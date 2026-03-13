@@ -19,7 +19,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # Allow imports from this directory
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from embeddings import embed, embed_long_text, get_store
+from embeddings import (
+    TASK_RETRIEVAL_DOCUMENT,
+    TASK_RETRIEVAL_QUERY,
+    embed,
+    embed_long_text,
+    get_store,
+)
 from explainer import explain
 from parser import parse_resume
 from scorer import score_resume
@@ -80,7 +86,10 @@ async def parse_endpoint(
         path.unlink(missing_ok=True)
 
     rid = resume_id or path.stem
-    vec = embed_long_text(parsed.cleaned_text or parsed.raw_text)  # chunked — no 256-token truncation
+    vec = embed_long_text(
+        parsed.cleaned_text or parsed.raw_text,
+        task_type=TASK_RETRIEVAL_DOCUMENT,
+    )
 
     store = get_store()
     store.add(
@@ -133,7 +142,7 @@ async def rank_endpoint(
         except Exception:
             raise HTTPException(400, "Invalid weights JSON.")
 
-    jd_vec = embed(jd)
+    jd_vec = embed(jd, task_type=TASK_RETRIEVAL_QUERY)
     results = []
 
     for upload in resumes:
@@ -187,7 +196,7 @@ async def rank_stored(
     Rank resumes already stored in FAISS against a new job description.
     Useful when resumes have been pre-indexed via /parse.
     """
-    jd_vec = embed(jd)
+    jd_vec = embed(jd, task_type=TASK_RETRIEVAL_QUERY)
     store = get_store()
 
     if store.count() == 0:
