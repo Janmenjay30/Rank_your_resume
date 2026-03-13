@@ -6,3 +6,4 @@ resumes/
 uploaded_resumes/
 .DS_Store
 .vscode/
+.env
